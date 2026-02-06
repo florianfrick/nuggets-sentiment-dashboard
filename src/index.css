@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nuggets-blue: #0E2240;
+  --color-nuggets-gold: #FEC524;
+  --color-nuggets-red: #8B2131;
+  --color-nuggets-sky: #1D428A;
+}
+
+body {
+  @apply bg-nuggets-blue text-slate-100;
+}

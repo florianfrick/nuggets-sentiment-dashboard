@@ -94,7 +94,7 @@ export default function App() {
 
         {view === 'players' && (
           <PlayerView
-            playerName="Nikola Jokić"
+            playerName="Nikola Jokic"
             initialPlayer={targetPlayer}
             onGameSelect={handleGameNavigation}
             games={games}
