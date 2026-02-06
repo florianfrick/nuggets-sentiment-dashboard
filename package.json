@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-amplify/api": "^6.3.24",
+    "@aws-amplify/auth": "^6.19.1",
     "@tailwindcss/vite": "^4.1.18",
+    "aws-amplify": "^6.16.2",
     "axios": "^1.13.3",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
