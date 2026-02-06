@@ -6,6 +6,7 @@ import PlayerSentimentByGame from './PlayerSentimentByGame';
 import SentimentLadder from './SentimentLadder';
 import AvgSentimentOverTime from './AvgSentimentOverTime';
 import PerformanceCorrelation from './Correlation';
+import About from './About';
 
 const client = generateClient();
 
@@ -89,7 +90,7 @@ export default function SeasonDashboard({ games = [] }) {
             <PerformanceCorrelation sentiments={sentiments} />
         </div>
       </div>
-
+      <About/>
     </div>
   );
 }

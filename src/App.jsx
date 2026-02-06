@@ -12,7 +12,7 @@ import GameView from './components/GameView';
 const client = generateClient();
 
 export default function App() {
-  const [view, setView] = useState('games');
+  const [view, setView] = useState('players');
   const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [targetPlayer, setTargetPlayer] = useState(null);

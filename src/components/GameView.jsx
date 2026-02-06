@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateClient } from 'aws-amplify/api';
 import { getGamePlayers } from '../graphql/queries'; 
+import About from './About';
 
 import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Gauge } from 'lucide-react';
@@ -242,6 +243,7 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
             )}
         </div>
       </div>
+      <About />
     </div>
   );
 }
