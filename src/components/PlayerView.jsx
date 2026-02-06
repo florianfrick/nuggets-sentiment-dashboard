@@ -384,7 +384,7 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}/>
                 
-                <ReferenceLine y={0} yAxisId="right" stroke="#334155" strokeDasharray="3 3" />
+                <ReferenceLine y={0} stroke="#334155" strokeDasharray="3 3" />
                 
                 <Line 
                   type="monotone" 
