@@ -9,14 +9,21 @@ import { Gauge } from 'lucide-react';
 const client = generateClient();
 
 const METRICS = [
-  { key: 'ts', label: 'True Shooting %', isPercent: true },
-  { key: 'efg', label: 'eFG %', isPercent: true },
+  { key: 'plusminus', label: 'Plus/Minus', isPercent: false },
   { key: 'points', label: 'Points', isPercent: false },
   { key: 'assists', label: 'Assists', isPercent: false },
   { key: 'rebounds', label: 'Rebounds', isPercent: false },
-  { key: 'plusminus', label: '+/-', isPercent: false },
+  { key: 'steals', label: 'Steals', isPercent: false },
+  { key: 'blocks', label: 'Blocks', isPercent: false },
+  { key: 'fg_pct', label: 'FG %', isPercent: true },
+  { key: 'fg3_pct', label: '3-Point %', isPercent: true },
+  { key: 'ts', label: 'True Shooting %', isPercent: true },
+  { key: 'efg', label: 'Effective FG %', isPercent: true },
+  { key: 'ft_pct', label: 'Free Throw %', isPercent: true },
+  { key: 'mentions', label: 'Mentions', isPercent: false },
   { key: 'minutes', label: 'Minutes', isPercent: false },
 ];
+
 
 const ClickableBar = (props) => {
   const { x, y, width, height, fill, payload, onPlayerSelect } = props;
@@ -62,23 +69,34 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
           const players = result.data.getGamePlayers;
 
           const transformedData = players.map(player => {
-             const processedPlayer = {
-                ...player,
-                name: player.player_name,
-                sentiment: player.sentiment || 0,
-                mentions: player.mentions || 0
-             };
+              const fga = player.fga || 0;
+              const fgm = player.fgm || 0;
+              const fg3a = player.fg3a || 0;
+              const fg3m = player.fg3m || 0;
+              const fta = player.fta || 0;
+              const ftm = player.ftm || 0;
 
-             METRICS.forEach(metric => {
-                const rawVal = player[metric.key];
-                if (rawVal !== undefined && rawVal !== null) {
-                    processedPlayer[metric.key] = metric.isPercent ? (rawVal * 100) : rawVal;
-                } else {
-                    processedPlayer[metric.key] = 0;
-                }
-             });
+              const processedPlayer = {
+                  ...player,
+                  name: player.player_name,
+                  sentiment: player.sentiment || 0,
+                  mentions: player.mentions || 0,
+                  fg_pct: fga > 0 ? (fgm / fga) : 0,
+                  fg3_pct: fg3a > 0 ? (fg3m / fg3a) : 0,
+                  ft_pct: fta > 0 ? (ftm / fta) : 0,
+              };
 
-             return processedPlayer;
+              METRICS.forEach(metric => {
+                  const rawVal = processedPlayer[metric.key];
+                  
+                  if (rawVal !== undefined && rawVal !== null) {
+                      processedPlayer[metric.key] = metric.isPercent ? (Number(rawVal) * 100) : Number(rawVal);
+                  } else {
+                      processedPlayer[metric.key] = 0;
+                  }
+              });
+
+              return processedPlayer;
           });
           
           const getLastName = (fullName) => {
@@ -231,7 +249,7 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
 
                     <Bar 
                         yAxisId="right" 
-                        dataKey={selectedMetric.key}
+                        dataKey={selectedMetric.key} 
                         name="metric_val"
                         fill="#38bdf8" 
                         radius={[4, 4, 4, 4]} 

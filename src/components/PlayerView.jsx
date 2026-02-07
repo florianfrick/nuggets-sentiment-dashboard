@@ -14,17 +14,21 @@ const roster = [
 ];
 
 const METRICS = [
-  { key: 'ts', label: 'True Shooting %', isPercent: true },
-  { key: 'efg', label: 'eFG %', isPercent: true },
-  { key: 'fg_pct', label: 'Field Goal %', isPercent: true },
-  { key: 'fg3_pct', label: '3-Point %', isPercent: true },
-  { key: 'ft_pct', label: 'Free Throw %', isPercent: true },
-  { key: 'plusminus', label: 'Plus/Minus (+/-)', isPercent: false },
+  { key: 'plusminus', label: 'Plus/Minus', isPercent: false },
   { key: 'points', label: 'Points', isPercent: false },
   { key: 'assists', label: 'Assists', isPercent: false },
   { key: 'rebounds', label: 'Rebounds', isPercent: false },
+  { key: 'steals', label: 'Steals', isPercent: false },
+  { key: 'blocks', label: 'Blocks', isPercent: false },
+  { key: 'fg_pct', label: 'FG %', isPercent: true },
+  { key: 'fg3_pct', label: '3-Point %', isPercent: true },
+  { key: 'ts', label: 'True Shooting %', isPercent: true },
+  { key: 'efg', label: 'Effective FG %', isPercent: true },
+  { key: 'ft_pct', label: 'Free Throw %', isPercent: true },
+  { key: 'mentions', label: 'Mentions', isPercent: false },
   { key: 'minutes', label: 'Minutes', isPercent: false },
 ];
+
 
 const CustomTooltip = ({ active, payload, selectedMetric }) => {
   if (active && payload && payload.length) {
@@ -206,6 +210,8 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         acc.points += (game.points || 0);
         acc.assists += (game.assists || 0);
         acc.rebounds += (game.rebounds || 0);
+        acc.steals += (game.steals || 0);
+        acc.blocks += (game.blocks || 0);
         acc.plusminus += (game.plusminus || 0);
         
         acc.fga += (game.fga || 0);
@@ -219,7 +225,7 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         
         return acc;
     }, { 
-        games: 0, mentions: 0, mins: 0, points: 0, assists: 0, rebounds: 0, plusminus: 0,
+        games: 0, mentions: 0, mins: 0, points: 0, assists: 0, rebounds: 0, steals: 0, blocks: 0, plusminus: 0,
         fga: 0, fgm: 0, fg3a: 0, fg3m: 0, fta: 0, ftm: 0, sentiments: []
     });
 
@@ -251,6 +257,8 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
       points: getAvg(totals.points),
       assists: getAvg(totals.assists),
       rebounds: getAvg(totals.rebounds),
+      steals: getAvg(totals.steals),
+      blocks: getAvg(totals.blocks),
       plusminus: (totals.plusminus / totals.games).toFixed(1),
 
       fg_pct: fg_pct.toFixed(1),
@@ -315,6 +323,8 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                   <StatRow label="Points" value={stats.points} />
                   <StatRow label="Rebounds" value={stats.rebounds} />
                   <StatRow label="Assists" value={stats.assists} />
+                  <StatRow label="Steals" value={stats.steals} />
+                  <StatRow label="Blocks" value={stats.blocks} />
                   <StatRow label="Plus/Minus" value={stats.plusminus > 0 ? `+${stats.plusminus}` : stats.plusminus} colorClass={getStatColor('plusminus', stats.plusminus)} />
                   
                   <div className="h-4"></div> {/* spacer */}

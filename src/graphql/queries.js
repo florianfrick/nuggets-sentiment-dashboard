@@ -28,6 +28,12 @@ export const getGamePlayers = `
       rebounds
       steals
       blocks
+      fga
+      fgm
+      fta
+      ftm
+      fg3a
+      fg3m
       efg
       ts
       sentiment

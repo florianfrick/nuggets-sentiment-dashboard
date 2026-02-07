@@ -3,10 +3,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Play, Pause, RefreshCcw, Calendar, Users } from 'lucide-react';
 
 const METRICS = [
-  { key: 'ts', label: 'True Shooting %', isPercent: true, min: 0.40, max: 0.75 },
-  { key: 'efg', label: 'eFG %', isPercent: true, min: 0.40, max: 0.75 },
-  { key: 'points', label: 'Points', isPercent: false, min: 0, max: 35 },
   { key: 'plusminus', label: 'Plus/Minus', isPercent: false, min: -15, max: 15 },
+  { key: 'points', label: 'Points', isPercent: false, min: 0, max: 35 },
+  { key: 'assists', label: 'Assists', isPercent: false, min: 0, max: 12 },
+  { key: 'rebounds', label: 'Rebounds', isPercent: false, min: 0, max: 14 },
+  { key: 'steals', label: 'Steals', isPercent: false, min: 0, max: 4 },
+  { key: 'blocks', label: 'Blocks', isPercent: false, min: 0, max: 3 },
+  { key: 'fg_pct', label: 'FG %', isPercent: true, min: 0.30, max: 0.70 },
+  { key: 'fg3_pct', label: '3PT %', isPercent: true, min: 0.20, max: 0.60 },
+  { key: 'ts', label: 'True Shooting %', isPercent: true, min: 0.40, max: 0.85 },
+  { key: 'efg', label: 'Effective FG %', isPercent: true, min: 0.40, max: 0.85 },
+  { key: 'ft_pct', label: 'FT %', isPercent: true, min: 0.50, max: 1.00 },
+  { key: 'mentions', label: 'Mentions', isPercent: false, min: 0, max: 100 },
   { key: 'minutes', label: 'Minutes', isPercent: false, min: 5, max: 40 },
 ];
 
@@ -14,8 +22,7 @@ const getMetricColor = (value, metricConfig) => {
   if (value === null || value === undefined) return '#334155'; 
   
   let val = Number(value);
-  if (metricConfig.isPercent && val > 1) val = val / 100;
-
+  
   let normalized = Math.min(Math.max((val - metricConfig.min) / (metricConfig.max - metricConfig.min), 0), 1);
 
   if (metricConfig.invertColor) {
@@ -33,13 +40,11 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState(METRICS[0]); 
 
-  // Extract unique player names
   const playerNames = useMemo(() => {
     if (!sentiments.length) return [];
     return [...new Set(sentiments.map(s => s.player_name))].sort();
   }, [sentiments]);
 
-  // Sort games chronologically
   const sortedGames = useMemo(() => {
     if (!games.length) return [];
     return [...games].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -54,20 +59,32 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
     return playerNames.map(name => {
       const pData = gameStats.find(s => s.player_name === name);
       
-      let rawVal = pData ? pData[selectedMetric.key] : null;
-      if (rawVal !== null) rawVal = Number(rawVal);
+      let rawVal = null;
+      
+      if (pData) {
+        // Handle calculated metrics dynamically
+        if (selectedMetric.key === 'fg_pct') {
+            rawVal = pData.fga > 0 ? pData.fgm / pData.fga : 0;
+        } else if (selectedMetric.key === 'fg3_pct') {
+            rawVal = pData.fg3a > 0 ? pData.fg3m / pData.fg3a : 0;
+        } else if (selectedMetric.key === 'ft_pct') {
+            rawVal = pData.fta > 0 ? pData.ftm / pData.fta : 0;
+        } else {
+            rawVal = pData[selectedMetric.key];
+        }
+      }
 
-      const displayVal = rawVal; 
+      if (rawVal !== null && rawVal !== undefined) rawVal = Number(rawVal);
 
       return {
         name: name,
         sentiment: pData ? Number(pData.sentiment) : 0,
-        metricVal: displayVal,
+        metricVal: rawVal,
         mentions: pData ? pData.mentions : 0,
         color: getMetricColor(rawVal, selectedMetric),
         minutes: pData?.minutes || 0,
       };
-    }).filter(p => p.minutes > 0); // Only show players who played
+    }).filter(p => p.minutes > 0); 
   }, [sentiments, sortedGames, gameIndex, playerNames, selectedMetric]);
 
   useEffect(() => {
@@ -93,7 +110,6 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
   return (
     <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-2xl h-full flex flex-col overflow-hidden">
       
-      {/* Header */}
       <div className="flex-shrink-0 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-6">
         <div>
           <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
@@ -110,23 +126,14 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
                 })}
             </span>
             <span className="text-slate-700">|</span>
-
-            <span className={currentGame.away === "Nuggets" ? "text-yellow-500/80:text-white transition-colors" : ""}>
-              {currentGame.away}
-            </span>
-            
+            <span className={currentGame.away === "Nuggets" ? "text-yellow-500 transition-colors" : ""}>{currentGame.away}</span>
             <span> @ </span>
-
-            <span className={currentGame.home === "Nuggets" ? "text-yellow-500 group-hover:text-white transition-colors" : ""}>
-              {currentGame.home}
-            </span>
-          
+            <span className={currentGame.home === "Nuggets" ? "text-yellow-500 transition-colors" : ""}>{currentGame.home}</span>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-start sm:items-center">
-            {/* Metric Selector */}
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 max-w-2xl">
                 {METRICS.map(metric => (
                     <button
                         key={metric.key}
@@ -142,7 +149,6 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
                 ))}
             </div>
 
-            {/* Play Controls */}
             <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-full border border-slate-800 shrink-0">
                 <button 
                     onClick={() => { if(gameIndex >= sortedGames.length -1) setGameIndex(0); setIsPlaying(!isPlaying); }}
@@ -160,7 +166,6 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
         </div>
       </div>
 
-      {/* Manual Slider */}
       <div className="flex-shrink-0 mb-2 px-2">
         <input 
           type="range"
@@ -179,7 +184,6 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
         </div>
       </div>
 
-      {/* Chart Area */}
       <div className="flex-1 min-h-0 w-full">
         <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -209,6 +213,17 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
                 content={({ active, payload }) => {
                     if (active && payload?.[0]) {
                     const d = payload[0].payload;
+                    
+                    // Format value based on type
+                    let displayVal = 'N/A';
+                    if (d.metricVal !== null) {
+                        if (selectedMetric.isPercent) {
+                            displayVal = (d.metricVal * 100).toFixed(1) + '%';
+                        } else {
+                            displayVal = Number.isInteger(d.metricVal) ? d.metricVal : d.metricVal.toFixed(1);
+                        }
+                    }
+
                     return (
                         <div className="bg-slate-950 border border-yellow-500/30 p-3 rounded-xl shadow-2xl backdrop-blur-md z-50">
                         <p className="text-white font-bold mb-1 border-b border-slate-800 pb-1">{d.name}</p>
@@ -221,7 +236,7 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
                             </p>
                             <p className="flex justify-between gap-6">
                                 <span className="text-slate-400 uppercase tracking-tighter font-semibold">{selectedMetric.label}</span>
-                                <span className="text-white font-mono">{d.metricVal !== null ? d.metricVal.toFixed(1) : 'N/A'}</span>
+                                <span className="text-white font-mono">{displayVal}</span>
                             </p>
                             <p className="flex justify-between gap-6">
                                 <span className="text-slate-400 uppercase tracking-tighter font-semibold">Mentions</span>
@@ -235,7 +250,6 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
                 }}
             />
             <ReferenceLine x={0} stroke="#475569" strokeWidth={2} />
-            
             <Bar 
                 dataKey="sentiment" 
                 maxBarSize={32}
@@ -254,8 +268,7 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
         </BarChart>
         </ResponsiveContainer>
       </div>
-
-      {/* Legend Footer */}
+      
       <div className="mt-2 flex-shrink-0 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold">
         <div className="flex gap-4 items-center">
             <span className="text-red-500">
@@ -271,7 +284,6 @@ export default function PlayerSentimentByGame({ sentiments = [], games = [] }) {
               <a href={`https://www.reddit.com${currentGame.permalink}`} target="_blank" rel="noreferrer">Discussion Thread ↗</a>
           </div>
         )}
-
       </div>
     </div>
   );
