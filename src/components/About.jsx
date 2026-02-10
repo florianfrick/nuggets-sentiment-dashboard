@@ -16,7 +16,8 @@ export default function About() {
           Sentiment data is aggregated from <span className="text-yellow-500 font-medium"><a href="https://www.reddit.com/r/denvernuggets/">r/denvernuggets</a></span> post-game threads. 
           <br></br>Comments are analyzed using <span className="text-slate-300 font-medium">Gemma 3 27B</span> for one-shot sentiment analysis to grade player sentiment after every game.
           Corresponding game performance statistics are gathered using NBA boxscore.
-          <br></br>Dashboard is updated daily.
+          <br></br>Preseason games are included. Only matches with a post-game thread are included in stats.
+          <br></br>Dashboard is automatically updated daily.
         </p>
       </div>
     </div>

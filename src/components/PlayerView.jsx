@@ -202,38 +202,42 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
   const stats = useMemo(() => {
     if (!playerData.length) return null;
 
-    // Sum
     const totals = playerData.reduce((acc, game) => {
-        acc.games += 1;
         acc.mentions += (game.mentions || 0);
-        acc.mins += (game.minutes || 0);
-        acc.points += (game.points || 0);
-        acc.assists += (game.assists || 0);
-        acc.rebounds += (game.rebounds || 0);
-        acc.steals += (game.steals || 0);
-        acc.blocks += (game.blocks || 0);
-        acc.plusminus += (game.plusminus || 0);
-        
-        acc.fga += (game.fga || 0);
-        acc.fgm += (game.fgm || 0);
-        acc.fg3a += (game.fg3a || 0);
-        acc.fg3m += (game.fg3m || 0);
-        acc.fta += (game.fta || 0);
-        acc.ftm += (game.ftm || 0);
-
         if (game.sentiment != null) acc.sentiments.push(game.sentiment);
+
+        const minutes = parseFloat(game.minutes || 0);
+        
+        if (minutes > 0) {
+            acc.gamesPlayed += 1; // Only increment games played if minutes > 0
+            acc.mins += minutes;
+            
+            acc.points += (game.points || 0);
+            acc.assists += (game.assists || 0);
+            acc.rebounds += (game.rebounds || 0);
+            acc.steals += (game.steals || 0);
+            acc.blocks += (game.blocks || 0);
+            acc.plusminus += (game.plusminus || 0);
+            
+            acc.fga += (game.fga || 0);
+            acc.fgm += (game.fgm || 0);
+            acc.fg3a += (game.fg3a || 0);
+            acc.fg3m += (game.fg3m || 0);
+            acc.fta += (game.fta || 0);
+            acc.ftm += (game.ftm || 0);
+        }
         
         return acc;
     }, { 
-        games: 0, mentions: 0, mins: 0, points: 0, assists: 0, rebounds: 0, steals: 0, blocks: 0, plusminus: 0,
+        gamesPlayed: 0, mentions: 0, mins: 0, points: 0, assists: 0, rebounds: 0, steals: 0, blocks: 0, plusminus: 0,
         fga: 0, fgm: 0, fg3a: 0, fg3m: 0, fta: 0, ftm: 0, sentiments: []
     });
 
-    // Averages
-    const getAvg = (num) => (num / totals.games).toFixed(1);
+    // Prevent divide by zero if a player has 0 games played
+    const gp = totals.gamesPlayed || 1;
+
+    const getAvg = (num) => (num / gp).toFixed(1);
     
-    // Percentages
-    // Avoid division by zero
     const fg_pct = totals.fga > 0 ? (totals.fgm / totals.fga) * 100 : 0;
     const fg3_pct = totals.fg3a > 0 ? (totals.fg3m / totals.fg3a) * 100 : 0;
     
@@ -253,13 +257,14 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
       avgSentiment: avgSent,
       totalMentions: totals.mentions,
       totalMins: Math.round(totals.mins),
+      gamesPlayed: totals.gamesPlayed,
       
       points: getAvg(totals.points),
       assists: getAvg(totals.assists),
       rebounds: getAvg(totals.rebounds),
       steals: getAvg(totals.steals),
       blocks: getAvg(totals.blocks),
-      plusminus: (totals.plusminus / totals.games).toFixed(1),
+      plusminus: (totals.plusminus / gp).toFixed(1),
 
       fg_pct: fg_pct.toFixed(1),
       fg3_pct: fg3_pct.toFixed(1),
@@ -267,7 +272,6 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
       ts: ts_val.toFixed(1)
     };
   }, [playerData]);
-
   
   return (
     <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -302,10 +306,14 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
           ) : (
             <div className="space-y-6">
                {/* High Level */}
-               <div className="grid grid-cols-3 gap-2 pb-4 border-b border-white/5 text-center">
+               <div className="grid grid-cols-4 gap-2 pb-4 border-b border-white/5 text-center">
                   <div>
                       <div className="text-slate-500 text-[9px] uppercase font-bold">Avg Sentiment</div>
                       <div className="text-white font-mono font-bold text-xl">{stats.avgSentiment}</div>
+                  </div>
+                  <div>
+                      <div className="text-slate-500 text-[9px] uppercase font-bold">Games</div>
+                      <div className="text-white font-mono font-bold text-xl">{stats.gamesPlayed}</div>
                   </div>
                   <div>
                       <div className="text-slate-500 text-[9px] uppercase font-bold">Minutes</div>
