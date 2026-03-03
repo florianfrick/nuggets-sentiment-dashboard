@@ -61,35 +61,36 @@ export default function SeasonDashboard({ games = [] }) {
   }
 
   return (
-    <div className="w-full h-screen max-h-screen p-3 flex flex-col gap-4 lg:overflow-hidden overflow-y-auto">
+    <div className="w-full min-h-screen lg:h-screen lg:max-h-screen p-3 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden">
       
-      {/* TOP ROW: 2/3 + 1/3 split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 grow-[2] min-h-0 basis-0">
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:grow-[2] lg:min-h-0 lg:basis-0">
         
         {/* Main Scatter/Line Plot */}
-        <div className="lg:col-span-2 h-full bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden relative z-0">
+        <div className="lg:col-span-2 min-h-[400px] lg:min-h-0 h-full bg-slate-900/50 rounded-2xl border border-slate-800 shadow-xl overflow-hidden relative z-0">
           <PlayerSentimentByGame sentiments={sentiments} games={games} />
         </div>
         
         {/* Leaderboard */}
-        <div className="lg:col-span-1 h-full">
+        <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 h-full">
           <SentimentLadder sentiments={sentiments} />
         </div>
       </div>
 
       {/* BOTTOM ROW: 3/5 + 2/5 split */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 grow min-h-0 basis-0">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:grow lg:min-h-0 lg:basis-0">
         
         {/* Rolling Average Chart */}
-        <div className="lg:col-span-3 h-64 lg:h-full">
+        <div className="lg:col-span-3 min-h-[300px] lg:min-h-0 h-full">
             <AvgSentimentOverTime sentiments={sentiments} games={games} />
         </div>
 
         {/* Scatter Correlation */}
-        <div className="lg:col-span-2 h-64 lg:h-full">
+        <div className="lg:col-span-2 min-h-[300px] lg:min-h-0 h-full">
             <PerformanceCorrelation sentiments={sentiments} />
         </div>
       </div>
+      
       <About/>
     </div>
   );

@@ -24,7 +24,6 @@ const METRICS = [
   { key: 'minutes', label: 'Minutes', isPercent: false },
 ];
 
-
 const ClickableBar = (props) => {
   const { x, y, width, height, fill, payload, onPlayerSelect } = props;
 
@@ -101,7 +100,6 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
           
           const getLastName = (fullName) => {
             const parts = fullName.split(' ');
-            // Filter out common suffixes
             const relevantParts = parts.filter(p => !['Jr.', 'Sr.', 'II', 'III', 'IV'].includes(p));
             return relevantParts[relevantParts.length - 1];
           };
@@ -109,8 +107,6 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
           transformedData.sort((a, b) => {
             const lastA = getLastName(a.name);
             const lastB = getLastName(b.name);
-            
-            // sort by last name
             return lastA.localeCompare(lastB);
           });
 
@@ -126,7 +122,6 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
     }
   }, [selectedGame]);
 
-  // Avg sentiment
   const weightedAvgSentiment = useMemo(() => {
     if (data.length === 0) return 0;
 
@@ -145,39 +140,40 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
   }
 
   return (
-    <div className="flex-1 space-y-6 animate-in fade-in duration-700">
-      {/* Score Card */}
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard 
-            label={`${selectedGame.away} @ ${selectedGame.home}`} 
-            value={`${selectedGame.away_pts} - ${selectedGame.home_pts}`} 
-            isAccent
-        />
-        <StatCard label="Average Sentiment" value={weightedAvgSentiment}/>
-        <StatCard label="# Player Mentions" value={data.reduce((sum, p) => sum + p.mentions, 0)} />
+    <div className="flex-1 space-y-4 sm:space-y-6 animate-in fade-in duration-700 w-full overflow-hidden">
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
+        <div className="col-span-2 sm:col-span-1">
+          <StatCard 
+              label={`${selectedGame.away} @ ${selectedGame.home}`} 
+              value={`${selectedGame.away_pts} - ${selectedGame.home_pts}`} 
+              isAccent
+          />
+        </div>
+        <StatCard label="Avg Sentiment" value={weightedAvgSentiment}/>
+        <StatCard label="# Mentions" value={data.reduce((sum, p) => sum + p.mentions, 0)} />
       </div>
 
       {/* Main Chart Container */}
-      <div className="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
+      <div className="bg-slate-900/50 p-4 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden w-full">
         
         {/* Header with Metric Selector */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-6">
-          <h3 className="text font-bold uppercase tracking flex items-center gap-2">
+        <div className="flex flex-col mb-6 gap-4 w-full">
+          <h3 className="text font-bold uppercase tracking flex flex-wrap items-center gap-2">
             <Gauge className="w-4 h-4 text-white-500" />
-            <span className="flex gap-1">
+            <span className="flex gap-1 text-sm sm:text-base">
               <span className="text-yellow-500">Sentiment</span>
               <span className="text-white">vs</span>
               <span className="text-[#2774b3]">{selectedMetric.label}</span>
             </span>
           </h3>
 
-          {/* Metric Buttons */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex overflow-x-auto gap-2 pb-2 w-full snap-x">
             {METRICS.map(metric => (
                 <button
                     key={metric.key}
                     onClick={() => setSelectedMetric(metric)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap shrink-0 snap-start ${
                         selectedMetric.key === metric.key
                         ? "bg-[#38bdf8] text-slate-900 border-[#38bdf8] shadow-[0_0_15px_rgba(56,189,248,0.3)]"
                         : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-slate-200"
@@ -189,43 +185,50 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
           </div>
 
           {/* Legend */}
-          <div className="flex gap-4 text-[10px] font-bold uppercase text-slate-500 min-w-max">
+          <div className="flex flex-wrap gap-4 text-[10px] font-bold uppercase text-slate-500 mt-2">
             <span className="flex items-center gap-1"><div className="w-2 h-2 bg-yellow-500 rounded-full"/> Fan Sentiment</span>
             <span className="flex items-center gap-1"><div className="w-2 h-2 bg-sky-400 rounded-full"/> {selectedMetric.label}</span>
           </div>
         </div>
 
-        <div className="h-[400px] w-full">
+        <div className="h-[350px] sm:h-[400px] w-full">
             {loading ? (
-                <div className="flex h-full w-full items-center justify-center text-blue-400 animate-pulse">
+                <div className="flex h-full w-full items-center justify-center text-blue-400 animate-pulse text-sm">
                     Loading Stats...
                 </div>
             ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <ComposedChart data={data} margin={{ top: 10, right: 0, bottom: 60, left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    
                     <XAxis 
                       dataKey="name" 
-                      stroke="white" 
-                      fontSize={11}
+                      stroke="#94a3b8" 
+                      fontSize={10}
                       tickLine={false} 
-                      axisLine={false} 
+                      axisLine={false}
+                      angle={-45}
+                      textAnchor="end"
+                      interval={0} // Forces all names to show
+                      tickMargin={10}
                     />
                     
                     <YAxis 
                       yAxisId="left" 
                       orientation="left" 
                       stroke="#FEC524" 
-                      fontSize={11} 
+                      fontSize={10} 
                       domain={[-100, 100]}
+                      width={35}
                     />
                     
                     <YAxis 
                       yAxisId="right" 
                       orientation="right" 
                       stroke="#38bdf8" 
-                      fontSize={11} 
+                      fontSize={10} 
                       domain={['auto', 'auto']}
+                      width={35}
                     />
                     
                     <Tooltip 
@@ -236,6 +239,7 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
                             return [Number(value).toFixed(2), "Sentiment"];
                         }}
                         labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                        cursor={{fill: '#1e293b', opacity: 0.4}}
                     />
                     
                     <Bar 
@@ -243,7 +247,7 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
                         dataKey="sentiment" 
                         fill="#FEC524" 
                         radius={[4, 4, 0, 0]} 
-                        barSize={20}
+                        barSize={12} // Made slightly thinner to fit more bars gracefully
                         shape={<ClickableBar onPlayerSelect={onPlayerSelect} />}
                     />
 
@@ -253,7 +257,7 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
                         name="metric_val"
                         fill="#38bdf8" 
                         radius={[4, 4, 4, 4]} 
-                        barSize={20}
+                        barSize={12}
                         shape={<ClickableBar onPlayerSelect={onPlayerSelect} />}
                     />
                     </ComposedChart>
@@ -267,8 +271,9 @@ export default function GameView({ selectedGame, onPlayerSelect }) {
 }
 
 const StatCard = ({ label, value, isAccent }) => (
-  <div className={`p-6 rounded-2xl border ${isAccent ? 'border-yellow-500/20 bg-yellow-500/5' : 'border-slate-800 bg-slate-900/40'}`}>
-    <p className="text-[10px] font-bold uppercase text-slate-500 mb-1">{label}</p>
-    <p className={`text-2xl font-black italic ${isAccent ? 'text-yellow-500' : 'text-white'}`}>{value}</p>
+  <div className={`p-4 sm:p-6 rounded-2xl border flex flex-col justify-center ${isAccent ? 'border-yellow-500/20 bg-yellow-500/5' : 'border-slate-800 bg-slate-900/40'}`}>
+    <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 mb-1">{label}</p>
+    {/* Added truncate so massive numbers/names don't break the box */}
+    <p className={`text-xl sm:text-2xl font-black italic truncate ${isAccent ? 'text-yellow-500' : 'text-white'}`}>{value}</p>
   </div>
 );

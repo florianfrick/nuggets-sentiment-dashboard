@@ -29,7 +29,6 @@ const METRICS = [
   { key: 'minutes', label: 'Minutes', isPercent: false },
 ];
 
-
 const CustomTooltip = ({ active, payload, selectedMetric }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -85,7 +84,6 @@ const CustomTooltip = ({ active, payload, selectedMetric }) => {
   }
   return null;
 };
-
 
 const getStatColor = (key, val) => {
     const num = parseFloat(val);
@@ -169,11 +167,9 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                 d.fg3_pct = fg3a > 0 ? (fg3m / fg3a) * 100 : 0;
                 d.ft_pct = fta > 0 ? (ftm / fta) * 100 : 0;
 
-                // TS% = Pts / (2 * (FGA + 0.44 * FTA))
                 const tsDivisor = 2 * (fga + (0.44 * fta));
                 d.ts = tsDivisor > 0 ? (points / tsDivisor) * 100 : 0;
 
-                // eFG% = (FGM + 0.5 * 3PM) / FGA
                 d.efg = fga > 0 ? ((fgm + (0.5 * fg3m)) / fga) * 100 : 0;
 
                 d.dateStr = new Date(d.date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
@@ -198,7 +194,6 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
     fetchHistory();
   }, [selectedPlayer, games]);
 
-  // Season Totals & Averages
   const stats = useMemo(() => {
     if (!playerData.length) return null;
 
@@ -209,7 +204,7 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         const minutes = parseFloat(game.minutes || 0);
         
         if (minutes > 0) {
-            acc.gamesPlayed += 1; // Only increment games played if minutes > 0
+            acc.gamesPlayed += 1; 
             acc.mins += minutes;
             
             acc.points += (game.points || 0);
@@ -233,22 +228,15 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         fga: 0, fgm: 0, fg3a: 0, fg3m: 0, fta: 0, ftm: 0, sentiments: []
     });
 
-    // Prevent divide by zero if a player has 0 games played
     const gp = totals.gamesPlayed || 1;
-
     const getAvg = (num) => (num / gp).toFixed(1);
     
     const fg_pct = totals.fga > 0 ? (totals.fgm / totals.fga) * 100 : 0;
     const fg3_pct = totals.fg3a > 0 ? (totals.fg3m / totals.fg3a) * 100 : 0;
-    
-    // eFG% = (FGM + 0.5 * 3PM) / FGA
     const efg_val = totals.fga > 0 ? ((totals.fgm + (0.5 * totals.fg3m)) / totals.fga) * 100 : 0;
-    
-    // TS% = PTS / (2 * (FGA + 0.44 * FTA))
     const ts_denom = 2 * (totals.fga + (0.44 * totals.fta));
     const ts_val = ts_denom > 0 ? (totals.points / ts_denom) * 100 : 0;
 
-    // Avg Sentiment
     const avgSent = totals.sentiments.length > 0 
         ? (totals.sentiments.reduce((a,b)=>a+b, 0) / totals.sentiments.length).toFixed(2) 
         : "0.00";
@@ -258,14 +246,12 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
       totalMentions: totals.mentions,
       totalMins: Math.round(totals.mins),
       gamesPlayed: totals.gamesPlayed,
-      
       points: getAvg(totals.points),
       assists: getAvg(totals.assists),
       rebounds: getAvg(totals.rebounds),
       steals: getAvg(totals.steals),
       blocks: getAvg(totals.blocks),
       plusminus: (totals.plusminus / gp).toFixed(1),
-
       fg_pct: fg_pct.toFixed(1),
       fg3_pct: fg3_pct.toFixed(1),
       efg: efg_val.toFixed(1),
@@ -274,14 +260,15 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
   }, [playerData]);
   
   return (
-    <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Roster Selector */}
-      <div className="flex flex-wrap gap-2 mb-8">
+    <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full overflow-hidden">
+      
+      <div className="flex overflow-x-auto gap-2 pb-4 mb-4 w-full snap-x">
         {roster.map(player => (
           <button
             key={player}
             onClick={() => setSelectedPlayer(player)}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+            // Added whitespace-nowrap and shrink-0 to prevent buttons from squishing
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap shrink-0 snap-start ${
               selectedPlayer === player 
                 ? "bg-yellow-500 text-blue-900 scale-105 shadow-lg" 
                 : "bg-slate-800 text-slate-400 hover:bg-slate-700"
@@ -292,10 +279,10 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         
         {/* SUMMARY CARD */}
-        <div className="bg-sky-500/10 p-6 rounded-3xl border border-slate-700 backdrop-blur-sm h-fit">
+        <div className="bg-sky-500/10 p-4 sm:p-6 rounded-3xl border border-slate-700 backdrop-blur-sm h-fit">
           <h3 className="text-yellow-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Season Summary</h3>
           <h1 className="text-3xl font-black italic text-white uppercase leading-none mb-6">
             {selectedPlayer}
@@ -305,8 +292,7 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
              <div className="text-slate-500 italic text-sm">Loading Stats...</div>
           ) : (
             <div className="space-y-6">
-               {/* High Level */}
-               <div className="grid grid-cols-4 gap-2 pb-4 border-b border-white/5 text-center">
+               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-4 border-b border-white/5 text-center">
                   <div>
                       <div className="text-slate-500 text-[9px] uppercase font-bold">Avg Sentiment</div>
                       <div className="text-white font-mono font-bold text-xl">{stats.avgSentiment}</div>
@@ -325,7 +311,6 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                   </div>
                </div>
 
-               {/* Average Performance */}
                <div>
                   <div className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-2">Season Averages</div>
                   <StatRow label="Points" value={stats.points} />
@@ -335,7 +320,7 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                   <StatRow label="Blocks" value={stats.blocks} />
                   <StatRow label="Plus/Minus" value={stats.plusminus > 0 ? `+${stats.plusminus}` : stats.plusminus} colorClass={getStatColor('plusminus', stats.plusminus)} />
                   
-                  <div className="h-4"></div> {/* spacer */}
+                  <div className="h-4"></div>
                   
                   <div className="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-2">Efficiency</div>
                   <StatRow label="Field Goal %" value={`${stats.fg_pct}%`} colorClass={getStatColor('fg_pct', stats.fg_pct)} />
@@ -348,9 +333,9 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         </div>
         
         {/* CHART AREA */}
-        <div className="lg:col-span-2 bg-slate-900/60 p-6 rounded-3xl border border-slate-700 backdrop-blur-sm flex flex-col min-h-[450px]">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                <h3 className="text font-bold uppercase tracking flex items-center gap-2">
+        <div className="lg:col-span-2 bg-slate-900/60 p-4 sm:p-6 rounded-3xl border border-slate-700 backdrop-blur-sm flex flex-col min-h-[450px] w-full overflow-hidden">
+            <div className="flex flex-col mb-6 gap-4 w-full">
+                <h3 className="text font-bold uppercase flex items-center gap-2">
                   <Gauge className="w-4 h-4 text-slate-400" />
                   <span className="flex gap-2 text-sm">
                     <span className="text-yellow-500">Sentiment</span>
@@ -359,12 +344,12 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                   </span>
                 </h3>
                 
-                <div className="flex flex-wrap gap-1">
+                <div className="flex overflow-x-auto sm:flex-wrap gap-2 pb-2 w-full">
                     {METRICS.map(metric => (
                         <button
                             key={metric.key}
                             onClick={() => setSelectedMetric(metric)}
-                            className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                            className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap shrink-0 ${
                                 selectedMetric.key === metric.key
                                 ? "bg-[#38bdf8] text-slate-900 border-[#38bdf8]"
                                 : "bg-transparent text-slate-500 border-slate-700 hover:border-slate-500 hover:text-slate-300"
@@ -377,10 +362,10 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
             </div>
 
           {playerData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%" className="flex-1">
+            <ResponsiveContainer width="100%" height="100%" className="flex-1 min-h-[300px]">
               <LineChart
                 data={playerData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 5, left: -25, bottom: 0 }}
                 style={{ cursor: 'pointer' }}
               >
                 
@@ -388,12 +373,14 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
                     dataKey="dateStr"
                     tick={{ fill: '#64748b', fontSize: 10 }}
                     interval="preserveStartEnd"
+                    tickMargin={10}
                 />
                 
                 <YAxis 
                     orientation="left"
                     tick={{ fill: '#64748b', fontSize: 10 }}
                     domain={['auto', 'auto']}
+                    width={40}
                 />
 
                 <Tooltip 
