@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { generateClient } from 'aws-amplify/api';
 import { getPlayerHistory } from '../graphql/queries'; 
 import About from './About';
+import AIChat from './AIChat';
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
 import { Gauge } from 'lucide-react';
@@ -419,6 +420,8 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
           )}
         </div>
       </div>
+
+      <AIChat />
       <About />
     </div>
   );

@@ -7,6 +7,7 @@ import SentimentLadder from './SentimentLadder';
 import AvgSentimentOverTime from './AvgSentimentOverTime';
 import PerformanceCorrelation from './Correlation';
 import About from './About';
+// import AIChat from './AIChat';
 
 const client = generateClient();
 
@@ -91,6 +92,7 @@ export default function SeasonDashboard({ games = [] }) {
         </div>
       </div>
       
+      {/* <AIChat /> */}
       <About/>
     </div>
   );
