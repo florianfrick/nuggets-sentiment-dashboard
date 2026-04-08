@@ -1,23 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { generateClient } from 'aws-amplify/api';
 import { v4 as uuidv4 } from 'uuid';
-import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, BrainCircuit } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// 1. The Async Mutation (Sends the question and returns instantly)
 const sendQuestionMutation = /* GraphQL */ `
   mutation SendQuestion($sessionId: String!, $question: String!, $history: String) {
     sendQuestion(sessionId: $sessionId, question: $question, history: $history)
   }
 `;
 
-// 2. The WebSocket Subscription (Listens for the Lambda's response)
 const onAIResponseSubscription = /* GraphQL */ `
   subscription OnAIResponse($sessionId: String!) {
     onAIResponse(sessionId: $sessionId) {
       sessionId
       answer
+      type
     }
   }
 `;
@@ -29,19 +28,18 @@ export default function AIChat() {
   const [messages, setMessages] = useState([
     { 
       role: 'ai', 
-      content: "Hello! I'm the Nuggets AI. Ask me anything about player sentiment, performance, recent games, or season trends." 
+      content: "Hello! I'm the Nuggets AI. Ask me anything about player sentiment, performance, recent games, or season trends.",
+      thoughts: [],
+      isThinking: false
     }
   ]);
+  // Global loading state for disabling inputs
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   
-  // Create a persistent, unique session ID for this specific chat instance
   const sessionId = useRef(uuidv4()).current;
-  
-  // The stopwatch reference to track how long the AI takes
   const requestStartTime = useRef(null);
 
-  // Auto-scroll to the bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -50,62 +48,76 @@ export default function AIChat() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // STEP 1: Set up the WebSocket Listener on Mount
+  // STEP 1: WebSocket Listener
   useEffect(() => {
-    console.log("Opening WebSocket for Session:", sessionId);
-
     const subscription = client.graphql({
       query: onAIResponseSubscription,
       variables: { sessionId: sessionId }
     }).subscribe({
       next: ({ data }) => {
-        // The AI finished thinking and Lambda pushed the answer!
-        const aiAnswer = data.onAIResponse.answer;
+        const { answer, type } = data.onAIResponse;
         
-        // Stop the timer and calculate seconds
-        let timeTakenStr = null;
-        if (requestStartTime.current) {
-          const endTime = performance.now();
-          timeTakenStr = ((endTime - requestStartTime.current) / 1000).toFixed(1);
-        }
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMsgIndex = newMessages.length - 1;
+          const lastMsg = newMessages[lastMsgIndex];
 
-        setMessages(prev => [...prev, { 
-          role: 'ai', 
-          content: aiAnswer,
-          timeTaken: timeTakenStr
-        }]);
-        
-        setIsLoading(false); // Turn off the spinner
+          if (lastMsg.role === 'ai') {
+            const updatedMsg = { ...lastMsg };
+
+            if (type === 'THOUGHT') {
+              // Add thought to the array
+              updatedMsg.thoughts = [...(updatedMsg.thoughts || []), answer];
+            } 
+            else if (type === 'DONE') {
+              // Pop in the full final text
+              updatedMsg.content = answer;
+              updatedMsg.isThinking = false;
+              setIsLoading(false);
+              
+              if (requestStartTime.current) {
+                const endTime = performance.now();
+                updatedMsg.timeTaken = ((endTime - requestStartTime.current) / 1000).toFixed(1);
+              }
+            }
+            else if (type === 'ERROR') {
+              updatedMsg.content = answer;
+              updatedMsg.isThinking = false;
+              setIsLoading(false);
+            }
+
+            newMessages[lastMsgIndex] = updatedMsg;
+          }
+          return newMessages;
+        });
       },
       error: (error) => {
-        console.error('WebSocket Subscription Error:', error);
-        setMessages(prev => [...prev, { 
-          role: 'ai', 
-          content: "Sorry, my connection dropped while analyzing the data." 
-        }]);
+        console.error('WebSocket Error:', error);
         setIsLoading(false);
       }
     });
 
-    // Cleanup: Close connection when component unmounts
     return () => subscription.unsubscribe();
   }, [sessionId]);
 
-  // STEP 2: Handle User Submission
+  // STEP 2: Handle Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userQuestion = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userQuestion }]);
-    setIsLoading(true); // Turn on the spinner
-    
-    // Start the stopwatch right before sending to Lambda
+    setIsLoading(true);
     requestStartTime.current = performance.now();
 
+    // Append user message AND an empty AI message that is "thinking"
+    setMessages(prev => [
+      ...prev, 
+      { role: 'user', content: userQuestion },
+      { role: 'ai', content: '', thoughts: [], isThinking: true }
+    ]);
+
     try {
-      // Fire the asynchronous mutation. It hands the job to Lambda and finishes instantly.
       await client.graphql({
         query: sendQuestionMutation,
         variables: { 
@@ -114,82 +126,94 @@ export default function AIChat() {
           history: JSON.stringify(messages)
         }
       });
-      // Notice we DO NOT set the AI message here anymore. We wait for the subscription!
     } catch (error) {
       console.error('Error triggering AI job:', error);
-      setMessages(prev => [...prev, { 
-        role: 'ai', 
-        content: "Sorry, I couldn't reach the server. Please try again." 
-      }]);
       setIsLoading(false);
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        newMsgs[newMsgs.length - 1].content = "Failed to connect to server.";
+        newMsgs[newMsgs.length - 1].isThinking = false;
+        return newMsgs;
+      });
     }
   };
 
   return (
     <div className="bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col mt-6 overflow-hidden w-full resize-y min-h-[400px] max-h-[85vh]">
-      
       {/* Header */}
       <div className="bg-slate-800/40 px-4 py-3 border-b border-slate-800 flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-yellow-500" />
-        <h4 className="text-white font-bold text-sm uppercase tracking-wider">
-          Ask Nuggets AI
-        </h4>
-        <span className="ml-auto text-[10px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
-          Gemma 4 31B
-        </span>
+        <h4 className="text-white font-bold text-sm uppercase tracking-wider">Ask Nuggets AI</h4>
       </div>
 
-      {/* Chat Messages Area */}
+      {/* Chat Messages */}
       <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-4 scrollbar-hide">
         {messages.map((msg, index) => (
-          <div 
-            key={index} 
-            className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-          >
+          <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
             <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
               msg.role === 'user' ? 'bg-[#38bdf8] text-slate-900' : 'bg-slate-800 border border-slate-700 text-yellow-500'
             }`}>
               {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
             </div>
             
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                msg.role === 'user' 
-                  ? 'bg-[#38bdf8]/10 text-slate-200' 
-                  : 'bg-slate-800/50 text-slate-300'
-                }`}>
-                {msg.role === 'ai' ? (
-                  <div className="flex flex-col">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-invert prose-sm max-w-none">
-                      {msg.content}
-                    </ReactMarkdown>
-                    
-                    {/* The subtle timer badge */}
-                    {msg.timeTaken && (
-                      <span className="text-[10px] text-slate-500 self-end mt-2 select-none">
-                        ✨ Generated in {msg.timeTaken}s
+            <div className={`max-w-[80%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              
+              {/* THOUGHTS RENDERER */}
+              {msg.role === 'ai' && msg.thoughts && msg.thoughts.length > 0 && (
+                <div className="mb-2 w-full">
+                  <details className="group" open={msg.isThinking}>
+                    <summary className="flex items-center gap-2 cursor-pointer list-none text-xs text-slate-400 hover:text-slate-300 transition-colors">
+                      <BrainCircuit size={12} className={msg.isThinking ? 'animate-pulse text-[#38bdf8]' : ''} />
+                      <span className="font-mono">
+                        {msg.isThinking ? 'Agent is analyzing...' : 'View thought process'}
                       </span>
-                    )}
-                  </div>
+                    </summary>
+                    <div className="mt-2 pl-4 border-l-2 border-slate-700/50 flex flex-col gap-1.5">
+                      {msg.thoughts.map((thought, i) => (
+                        <span key={i} className="text-xs font-mono text-slate-500">
+                          {">"} {thought}
+                        </span>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+              )}
+
+              {/* MAIN CONTENT OR SPINNER */}
+              <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  msg.role === 'user' 
+                    ? 'bg-[#38bdf8]/10 text-slate-200' 
+                    : 'bg-slate-800/50 text-slate-300'
+                }`}>
+                
+                {msg.role === 'ai' ? (
+                  msg.isThinking ? (
+                    // Show a nice loading spinner while waiting for the full text
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Loader2 className="w-4 h-4 animate-spin text-yellow-500" />
+                      <span className="animate-pulse">Generating response...</span>
+                    </div>
+                  ) : (
+                    // Show the final text once it arrives
+                    <div className="flex flex-col">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-invert prose-sm max-w-none">
+                        {msg.content}
+                      </ReactMarkdown>
+                      {msg.timeTaken && (
+                        <span className="text-[10px] text-slate-500 self-end mt-2 select-none">
+                          ✨ Generated in {msg.timeTaken}s
+                        </span>
+                      )}
+                    </div>
+                  )
                 ) : (
                     msg.content
                 )}
-            </div>
+              </div>
 
+            </div>
           </div>
         ))}
-
-        {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex gap-3 flex-row">
-            <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-slate-800 border border-slate-700 text-yellow-500">
-              <Bot size={16} />
-            </div>
-            <div className="max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-3 bg-slate-800/50 border border-slate-700 flex items-center">
-              <Loader2 className="w-4 h-4 text-yellow-500 animate-spin" />
-              <span className="ml-2 text-sm text-slate-400 animate-pulse">Analyzing stats...</span>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -209,7 +233,7 @@ export default function AIChat() {
             disabled={isLoading || !input.trim()}
             className="absolute right-2 p-1.5 bg-[#38bdf8] text-slate-900 rounded-lg hover:bg-sky-400 disabled:opacity-50 disabled:hover:bg-[#38bdf8] transition-colors"
           >
-            <Send size={16} className="ml-0.5" />
+            {isLoading ? <Loader2 size={16} className="animate-spin ml-0.5" /> : <Send size={16} className="ml-0.5" />}
           </button>
         </div>
       </form>
