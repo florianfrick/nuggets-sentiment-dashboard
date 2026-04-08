@@ -1,3 +1,18 @@
+export const sendQuestion = /* GraphQL */ `
+  mutation SendQuestion($sessionId: String!, $question: String!) {
+    sendQuestion(sessionId: $sessionId, question: $question)
+  }
+`;
+
+export const onAIResponse = /* GraphQL */ `
+  subscription OnAIResponse($sessionId: String!) {
+    onAIResponse(sessionId: $sessionId) {
+      sessionId
+      answer
+    }
+  }
+`;
+
 export const getGameMetadata = `
   query GetGameMetadata($PK: String!) {
     getGameMetadata(PK: $PK) {
