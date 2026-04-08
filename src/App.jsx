@@ -9,6 +9,7 @@ import Sidebar from './components/GamesSidebar';
 import SeasonDashboard from './components/SeasonDashboard';
 import PlayerView from './components/PlayerView';
 import GameView from './components/GameView';
+import AIChat from './components/AIChat';
 
 const client = generateClient();
 
@@ -111,6 +112,7 @@ export default function App() {
       </nav>
 
       <main className="flex-1 overflow-y-auto p-8">
+        <AIChat />
         {view === 'season' && <SeasonDashboard games={games} />}
 
         {view === 'games' && (
@@ -136,6 +138,10 @@ export default function App() {
           />
         )}
       </main>
+
+
+
+
     </div>
   );
 }

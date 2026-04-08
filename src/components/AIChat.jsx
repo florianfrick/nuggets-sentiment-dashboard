@@ -110,7 +110,8 @@ export default function AIChat() {
         query: sendQuestionMutation,
         variables: { 
           sessionId: sessionId, 
-          question: userQuestion 
+          question: userQuestion,
+          history: JSON.stringify(messages)
         }
       });
       // Notice we DO NOT set the AI message here anymore. We wait for the subscription!

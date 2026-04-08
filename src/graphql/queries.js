@@ -1,6 +1,6 @@
-export const sendQuestion = /* GraphQL */ `
-  mutation SendQuestion($sessionId: String!, $question: String!) {
-    sendQuestion(sessionId: $sessionId, question: $question)
+const sendQuestionMutation = /* GraphQL */ `
+  mutation SendQuestion($sessionId: String!, $question: String!, $history: String) {
+    sendQuestion(sessionId: $sessionId, question: $question, history: $history)
   }
 `;
 
