@@ -1,18 +1,3 @@
-const sendQuestionMutation = /* GraphQL */ `
-  mutation SendQuestion($sessionId: String!, $question: String!, $history: String) {
-    sendQuestion(sessionId: $sessionId, question: $question, history: $history)
-  }
-`;
-
-export const onAIResponse = /* GraphQL */ `
-  subscription OnAIResponse($sessionId: String!) {
-    onAIResponse(sessionId: $sessionId) {
-      sessionId
-      answer
-    }
-  }
-`;
-
 export const getGameMetadata = `
   query GetGameMetadata($PK: String!) {
     getGameMetadata(PK: $PK) {

@@ -7,8 +7,8 @@ import remarkGfm from 'remark-gfm';
 
 // 1. The Async Mutation (Sends the question and returns instantly)
 const sendQuestionMutation = /* GraphQL */ `
-  mutation SendQuestion($sessionId: String!, $question: String!) {
-    sendQuestion(sessionId: $sessionId, question: $question)
+  mutation SendQuestion($sessionId: String!, $question: String!, $history: String) {
+    sendQuestion(sessionId: $sessionId, question: $question, history: $history)
   }
 `;
 
