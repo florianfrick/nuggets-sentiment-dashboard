@@ -28,7 +28,7 @@ export default function AIChat() {
   const [messages, setMessages] = useState([
     { 
       role: 'ai', 
-      content: "Hello! I'm the Nuggets AI. Ask me anything about player sentiment, performance, recent games, or season trends.",
+      content: "Hello! I'm the Nuggets AI powered by gemma-4-31b-it. Ask me anything about player sentiment, performance, recent games, or season trends.",
       thoughts: [],
       isThinking: false
     }
@@ -248,11 +248,6 @@ export default function AIChat() {
             </button>
           </div>
         </form>
-        <div className="flex justify-center items-center">
-          <span className="text-[10px] text-slate-500 tracking-wide">
-            Powered by <span className="font-mono text-slate-400">gemma-4-31b-it</span>
-          </span>
-        </div>
       </div>
     </div>
   );
