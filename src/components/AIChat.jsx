@@ -35,13 +35,21 @@ export default function AIChat() {
   ]);
   // Global loading state for disabling inputs
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+  
+  // Ref for the scrollable chat container
+  const chatContainerRef = useRef(null);
   
   const sessionId = useRef(uuidv4()).current;
   const requestStartTime = useRef(null);
 
+  // Directly scroll the container instead of the whole page
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   useEffect(() => {
@@ -147,7 +155,10 @@ export default function AIChat() {
       </div>
 
       {/* Chat Messages */}
-      <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-4 scrollbar-hide">
+      <div 
+        ref={chatContainerRef} 
+        className="p-4 flex-1 overflow-y-auto flex flex-col gap-4 scrollbar-hide"
+      >
         {messages.map((msg, index) => (
           <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
             <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -214,29 +225,35 @@ export default function AIChat() {
             </div>
           </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form */}
-      <form onSubmit={handleSubmit} className="p-3 border-t border-slate-800 bg-slate-900/60">
-        <div className="relative flex items-center">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading}
-            placeholder="How have Jokic and AG been playing recently?"
-            className="w-full bg-slate-800/50 border border-slate-700 text-slate-200 text-sm rounded-xl py-3 pl-4 pr-12 focus:outline-none focus:border-[#38bdf8] focus:ring-1 focus:ring-[#38bdf8] transition-all placeholder:text-slate-500 disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="absolute right-2 p-1.5 bg-[#38bdf8] text-slate-900 rounded-lg hover:bg-sky-400 disabled:opacity-50 disabled:hover:bg-[#38bdf8] transition-colors"
-          >
-            {isLoading ? <Loader2 size={16} className="animate-spin ml-0.5" /> : <Send size={16} className="ml-0.5" />}
-          </button>
+      {/* Input Form & Footer */}
+      <div className="border-t border-slate-800 bg-slate-900/60 p-3 flex flex-col gap-2">
+        <form onSubmit={handleSubmit}>
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={isLoading}
+              placeholder="How have Jokic and AG been playing recently?"
+              className="w-full bg-slate-800/50 border border-slate-700 text-slate-200 text-sm rounded-xl py-3 pl-4 pr-12 focus:outline-none focus:border-[#38bdf8] focus:ring-1 focus:ring-[#38bdf8] transition-all placeholder:text-slate-500 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="absolute right-2 p-1.5 bg-[#38bdf8] text-slate-900 rounded-lg hover:bg-sky-400 disabled:opacity-50 disabled:hover:bg-[#38bdf8] transition-colors"
+            >
+              {isLoading ? <Loader2 size={16} className="animate-spin ml-0.5" /> : <Send size={16} className="ml-0.5" />}
+            </button>
+          </div>
+        </form>
+        <div className="flex justify-center items-center">
+          <span className="text-[10px] text-slate-500 tracking-wide">
+            Powered by <span className="font-mono text-slate-400">gemma-4-31b-it</span>
+          </span>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
