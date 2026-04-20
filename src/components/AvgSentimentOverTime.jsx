@@ -26,7 +26,7 @@ export default function AvgSentimentOverTime({ sentiments = [], games = [] }) {
       return {
         date: new Date(game.date).toLocaleDateString('en-US', { timeZone:'MST', year: "numeric", month: 'short', day: 'numeric'}),
         avgSentiment: totalMentions > 0 ? (weightedSum / totalMentions) : 0,
-        opponent: game.away === 'Denver Nuggets' ? `@ ${game.home}` : `vs ${game.away}`,
+        matchup: `${game.away} @ ${game.home}`,
         PK: game.PK 
       };
     }).filter(Boolean); // Remove nulls (games with no data)
@@ -81,7 +81,7 @@ export default function AvgSentimentOverTime({ sentiments = [], games = [] }) {
                         return (
                             <div className="bg-slate-950 border border-slate-800 p-3 rounded-xl shadow-xl z-50">
                                 <div className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">{label}</div>
-                                <div className="text-white font-bold text-sm mb-1">{d.opponent}</div>
+                                <div className="text-white font-bold text-sm mb-1">{d.matchup}</div>
                                 <div className="flex items-center gap-2 mt-2">
                                     <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
                                     <span className="text-slate-400 text-xs">Avg Sentiment:</span>
