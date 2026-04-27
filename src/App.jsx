@@ -11,9 +11,9 @@ import PlayerView from './components/PlayerView';
 import GameView from './components/GameView';
 import AIChat from './components/AIChat';
 
-const client = generateClient();
 
 export default function App() {
+  const client = generateClient();
   const [view, setView] = useState('players');
   const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
