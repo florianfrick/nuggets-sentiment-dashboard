@@ -1,5 +1,10 @@
 # nuggets-sentiment-dashboard
+
+Website hosted on AWS at: https://main.d15pci5w4la9yj.amplifyapp.com/
+
+
  This full-stack project is an analytics dashboard for the Denver Nuggets that scrapes r/DenverNuggets Reddit threads, performs sentiment analysis using Gemini, and visualizes the data against boxscore performance to track season trends.
+
 
 
 **Technical Architecture**
