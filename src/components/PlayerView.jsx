@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateClient } from 'aws-amplify/api';
 import { getPlayerHistory } from '../graphql/queries'; 
+import { getSeasonKey } from '../utils/season';
 import About from './About';
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
@@ -128,7 +129,7 @@ const ClickableActiveDot = (props) => {
   );
 };
 
-export default function PlayerView({ onGameSelect, games = [], initialPlayer }) {
+export default function PlayerView({ onGameSelect, games = [], initialPlayer, selectedSeason }) {
   const [selectedPlayer, setSelectedPlayer] = useState(initialPlayer || "Nikola Jokic");
   const [selectedMetric, setSelectedMetric] = useState(METRICS[0]);
   const [playerData, setPlayerData] = useState([]);
@@ -152,7 +153,12 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
             const rawItems = result.data.getPlayerHistory || [];
             const sortedItems = rawItems.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            const processed = sortedItems.map(item => {
+            // Scope the player's history to the selected season when one is active.
+            const scopedItems = selectedSeason
+              ? sortedItems.filter(item => getSeasonKey(item.date) === selectedSeason)
+              : sortedItems;
+
+            const processed = scopedItems.map(item => {
                 const d = { ...item };
 
                 const fga = d.fga || 0;
@@ -192,7 +198,7 @@ export default function PlayerView({ onGameSelect, games = [], initialPlayer }) 
         }
     }
     fetchHistory();
-  }, [selectedPlayer, games]);
+  }, [selectedPlayer, games, selectedSeason]);
 
   const stats = useMemo(() => {
     if (!playerData.length) return null;

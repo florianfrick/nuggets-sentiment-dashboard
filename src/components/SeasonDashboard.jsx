@@ -20,7 +20,7 @@ export default function SeasonDashboard({ games = [] }) {
       try {
         const result = await client.graphql({
           query: listSeasonStats,
-          variables: { limit: 2000 }
+          variables: { limit: 5000 }
         });
         
         const rawData = result.data.listSeasonStats;
@@ -35,9 +35,13 @@ export default function SeasonDashboard({ games = [] }) {
             };
         });
 
-        enrichedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Scope sentiments to the selected season's games so every chart
+        // (including SentimentLadder and Correlation) only sees that season.
+        const seasonPKs = new Set(games.map(g => g.PK));
+        const scopedData = enrichedData.filter(s => seasonPKs.has(s.PK));
+        scopedData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        setSentiments(enrichedData);
+        setSentiments(scopedData);
       } catch (err) {
         console.error("Error fetching season stats:", err);
       } finally {

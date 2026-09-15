@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { generateClient } from 'aws-amplify/api';
 import { listGames } from './graphql/queries';
 
@@ -10,6 +10,8 @@ import SeasonDashboard from './components/SeasonDashboard';
 import PlayerView from './components/PlayerView';
 import GameView from './components/GameView';
 import AIChat from './components/AIChat';
+import SeasonSelector from './components/SeasonSelector';
+import { getSeasonKey, getAvailableSeasons } from './utils/season';
 
 
 export default function App() {
@@ -21,6 +23,29 @@ export default function App() {
   
   // 2. Add state to control sidebar expansion (defaulting to true)
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // Global season selection (derived from game dates — no backend changes)
+  const [selectedSeason, setSelectedSeason] = useState(null);
+
+  const availableSeasons = useMemo(() => getAvailableSeasons(games), [games]);
+
+  // All views (other than the always-global AI Chat) are scoped to the selected season.
+  const seasonGames = useMemo(
+    () => games.filter((g) => getSeasonKey(g.date) === selectedSeason),
+    [games, selectedSeason]
+  );
+
+  // Default to the most recent season once games load.
+  useEffect(() => {
+    if (availableSeasons.length && !selectedSeason) {
+      setSelectedSeason(availableSeasons[availableSeasons.length - 1]);
+    }
+  }, [availableSeasons, selectedSeason]);
+
+  // When the season changes, point the Games view at that season's first game.
+  useEffect(() => {
+    setSelectedGame(seasonGames[0] || null);
+  }, [seasonGames]);
 
   const handlePlayerNavigation = (playerName) => {
     setTargetPlayer(playerName);
@@ -85,6 +110,17 @@ export default function App() {
               </div>
           </div>
           
+          {/* 2.5 Global Season Selector */}
+          <div className="mb-2">
+            <SeasonSelector
+              seasons={availableSeasons}
+              value={selectedSeason}
+              onChange={setSelectedSeason}
+              expanded={isExpanded}
+              onExpand={() => setIsExpanded(true)}
+            />
+          </div>
+
           {/* Navigation Items */}
           <div className="px-2 flex flex-col gap-2">
               <NavButton 
@@ -113,12 +149,12 @@ export default function App() {
 
       <main className="flex-1 overflow-y-auto p-8">
         <AIChat />
-        {view === 'season' && <SeasonDashboard games={games} />}
+        {view === 'season' && <SeasonDashboard games={seasonGames} />}
 
         {view === 'games' && (
           <div className="flex gap-8 h-full">
             <Sidebar 
-                games={games} 
+                games={seasonGames} 
                 onSelect={setSelectedGame} 
                 activeId={selectedGame?.PK}
             />
@@ -134,7 +170,8 @@ export default function App() {
             playerName="Nikola Jokic"
             initialPlayer={targetPlayer}
             onGameSelect={handleGameNavigation}
-            games={games}
+            games={seasonGames}
+            selectedSeason={selectedSeason}
           />
         )}
       </main>
